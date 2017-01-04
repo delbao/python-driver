@@ -29,15 +29,17 @@ class Runner(BenchmarkThread):
         for i in range(self.num_queries):
             if i >= 120:
                 old_future = futures.get_nowait()
-                old_future.result()
+                old_future.was_applied
 
-            key = "{}-{}".format(self.thread_num, i)
-            future = self.run_query(key)
-            futures.put_nowait(future)
+            #key = "{}-{}".format(self.thread_num, i)
+            #future = self.run_query(key)
+            future = self.run_my_query()
+            if future:
+                futures.put_nowait(future)
 
         while True:
             try:
-                futures.get_nowait().result()
+                futures.get_nowait().was_applied
             except queue.Empty:
                 break
 

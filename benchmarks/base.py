@@ -127,7 +127,7 @@ def teardown(options):
 def benchmark(thread_class):
     options, args = parse_options()
     for conn_class in options.supported_reactors:
-        setup(options)
+        # setup(options)
         log.info("==== %s ====" % (conn_class.__name__,))
 
         kwargs = {'metrics_enabled': options.enable_metrics,
@@ -178,7 +178,7 @@ def benchmark(thread_class):
             end = time.time()
         finally:
             cluster.shutdown()
-            teardown(options)
+            # teardown(options)
 
         total = end - start
         log.info("Total time: %0.2fs" % total)
@@ -285,6 +285,30 @@ class BenchmarkThread(Thread):
     def start_profile(self):
         if self.profiler:
             self.profiler.enable()
+
+    def run_my_query(self):
+        # read current count
+        cond = "cluster=\'test\' and topic=\'test\' and partition={" \
+               "thread_num}".format(thread_num=self.thread_num)
+
+        result = self.session.execute("SELECT {col} FROM {table} WHERE {cond}"
+                                         .format(col='offset',
+                                                 table='kafka_consumer_offset',
+                                                 cond=cond))
+        # run lwt query
+        old_count = result[0].offset
+        # " update kafka_consumer_offset set offset=1 where cluster='test' and
+        #  topic='test' and partition=5 if offset=0;"
+        try:
+            return self.session.execute("UPDATE {table} SET offset={new_count} "
+                                    "WHERE {cond}"
+                                    "if offset={old_count}".
+                                    format(table="kafka_consumer_offset",
+                                           new_count=old_count+1,
+                                           cond=cond,
+                                           old_count=old_count))
+        except:
+            return None
 
     def run_query(self, key, **kwargs):
         return self.session.execute_async(self.query.format(key=key), **kwargs)

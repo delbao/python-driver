@@ -26,12 +26,14 @@ class Runner(BenchmarkThread):
         self.start_profile()
 
         for i in range(self.num_queries):
-            key = "{0}-{1}".format(self.thread_num, i)
-            future = self.run_query(key)
-            futures.append(future)
+            # key = "{0}-{1}".format(self.thread_num, i)
+            # future = self.run_query(key)
+            future = self.run_my_query()
+            if future:
+                futures.append(future)
 
         for future in futures:
-            future.result()
+            future.was_applied
 
         self.finish_profile()
 

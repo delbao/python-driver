@@ -31,17 +31,19 @@ class Runner(BenchmarkThread):
                 # clear the existing queue
                 while True:
                     try:
-                        futures.get_nowait().result()
+                        futures.get_nowait().was_applied
                     except queue.Empty:
                         break
 
-            key = "{0}-{1}".format(self.thread_num, i)
-            future = self.run_query(key)
-            futures.put_nowait(future)
+            #key = "{0}-{1}".format(self.thread_num, i)
+            #future = self.run_query(key)
+            future = self.run_my_query()
+            if future:
+                futures.put_nowait(future)
 
         while True:
             try:
-                futures.get_nowait().result()
+                futures.get_nowait().was_applied
             except queue.Empty:
                 break
 
